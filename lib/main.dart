@@ -1,15 +1,19 @@
-import 'package:bassknight/objects/player.dart';
 import 'package:flame/game.dart';
-import 'package:flame/components.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+import 'bass_knight.dart';
+import 'overlays/game_over.dart';
+import 'overlays/main_menu.dart';
 
 void main() {
-  runApp(GameWidget(game: FlameGame(world: MyWorld())));
-}
-
-class MyWorld extends World {
-  @override
-  Future<void> onLoad() async {
-    add(Player(position: Vector2(0, 0)));
-  }
+  runApp(
+    GameWidget<BassKnightGame>.controlled(
+      gameFactory: BassKnightGame.new,
+      overlayBuilderMap: {
+        'MainMenu': (_, game) => MainMenu(game: game),
+        'GameOver': (_, game) => GameOver(game: game),
+      },
+      initialActiveOverlays: const ['MainMenu'],
+    ),
+  );
 }
