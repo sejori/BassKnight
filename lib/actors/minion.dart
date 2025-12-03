@@ -21,10 +21,6 @@ class Minion extends SpriteAnimationComponent
       ),
     );
     add(RectangleHitbox(collisionType: CollisionType.passive));
-    // Face left
-    if (scale.x > 0) {
-      flipHorizontally();
-    }
   }
 
   @override

@@ -96,6 +96,7 @@ class Player extends SpriteAnimationComponent
         final direction = minionCenter.x - position.x;
         if ((scale.x > 0 && direction > 0) || (scale.x < 0 && direction < 0)) {
           minion.removeFromParent();
+          game.starsCollected++;
         }
       }
     }

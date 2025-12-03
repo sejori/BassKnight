@@ -37,7 +37,7 @@ class BassKnightGame extends FlameGame
     ]);
     camera.viewfinder.anchor = Anchor.topLeft;
     
-    minionSpawnTimer = Timer(2.0, onTick: spawnMinion, repeat: true);
+    minionSpawnTimer = Timer(2.0, onTick: spawnMinion, repeat: true, autoStart: false);
 
     initializeGame(loadHud: true);
   }
@@ -81,7 +81,11 @@ class BassKnightGame extends FlameGame
     if (loadHud) {
       camera.viewport.add(Hud());
     }
+  }
+
+  void startGame() {
     minionSpawnTimer?.start();
+    overlays.remove('MainMenu');
   }
 
   void reset() {
