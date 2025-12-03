@@ -54,8 +54,28 @@ class Player extends SpriteAnimationComponent
         ? 1
         : 0;
 
-    hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
+    if (event is KeyDownEvent &&
+        keysPressed.contains(LogicalKeyboardKey.space)) {
+      attack();
+    }
     return true;
+  }
+
+  void attack() {
+    final minions = game.world.children.whereType<Minion>();
+    for (final minion in minions) {
+      // Calculate minion center assuming anchor is bottomLeft
+      final minionCenter =
+          minion.position + Vector2(minion.size.x / 2, -minion.size.y / 2);
+      final distance = position.distanceTo(minionCenter);
+
+      if (distance < 150) {
+        final direction = minionCenter.x - position.x;
+        if ((scale.x > 0 && direction > 0) || (scale.x < 0 && direction < 0)) {
+          minion.removeFromParent();
+        }
+      }
+    }
   }
 
   @override
