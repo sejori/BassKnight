@@ -42,18 +42,6 @@ class Player extends SpriteAnimationComponent
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    horizontalDirection = 0;
-    horizontalDirection +=
-        (keysPressed.contains(LogicalKeyboardKey.keyA) ||
-            keysPressed.contains(LogicalKeyboardKey.arrowLeft))
-        ? -1
-        : 0;
-    horizontalDirection +=
-        (keysPressed.contains(LogicalKeyboardKey.keyD) ||
-            keysPressed.contains(LogicalKeyboardKey.arrowRight))
-        ? 1
-        : 0;
-
     if (event is KeyDownEvent &&
         keysPressed.contains(LogicalKeyboardKey.space)) {
       attack();
@@ -61,36 +49,10 @@ class Player extends SpriteAnimationComponent
     return true;
   }
 
-  void attack() {
-    final minions = game.world.children.whereType<Minion>();
-    for (final minion in minions) {
-      // Calculate minion center assuming anchor is bottomLeft
-      final minionCenter =
-          minion.position + Vector2(minion.size.x / 2, -minion.size.y / 2);
-      final distance = position.distanceTo(minionCenter);
-
-      if (distance < 150) {
-        final direction = minionCenter.x - position.x;
-        if ((scale.x > 0 && direction > 0) || (scale.x < 0 && direction < 0)) {
-          minion.removeFromParent();
-        }
-      }
-    }
-  }
-
   @override
   void update(double dt) {
-    velocity.x = horizontalDirection * moveSpeed;
+    velocity.x = 0;
     game.objectSpeed = 0;
-    // Prevent ember from going backwards at screen edge.
-    if (position.x - 36 <= 0 && horizontalDirection < 0) {
-      velocity.x = 0;
-    }
-    // Prevent ember from going beyond half screen.
-    if (position.x + 64 >= game.size.x / 2 && horizontalDirection > 0) {
-      velocity.x = 0;
-      game.objectSpeed = -moveSpeed;
-    }
 
     // Apply basic gravity.
     velocity.y += gravity;
@@ -119,13 +81,24 @@ class Player extends SpriteAnimationComponent
       removeFromParent();
     }
 
-    // Flip ember if needed.
-    if (horizontalDirection < 0 && scale.x > 0) {
-      flipHorizontally();
-    } else if (horizontalDirection > 0 && scale.x < 0) {
-      flipHorizontally();
-    }
     super.update(dt);
+  }
+
+  void attack() {
+    final minions = game.world.children.whereType<Minion>();
+    for (final minion in minions) {
+      // Calculate minion center assuming anchor is bottomLeft
+      final minionCenter =
+          minion.position + Vector2(minion.size.x / 2, -minion.size.y / 2);
+      final distance = position.distanceTo(minionCenter);
+
+      if (distance < 150) {
+        final direction = minionCenter.x - position.x;
+        if ((scale.x > 0 && direction > 0) || (scale.x < 0 && direction < 0)) {
+          minion.removeFromParent();
+        }
+      }
+    }
   }
 
   @override

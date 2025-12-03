@@ -5,7 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 import '../bass_knight.dart';
-import '../managers/segment_manager.dart';
+
 
 class GroundBlock extends SpriteComponent
     with HasGameReference<BassKnightGame> {
@@ -40,17 +40,6 @@ class GroundBlock extends SpriteComponent
 
     if (position.x < -size.x) {
       removeFromParent();
-      if (gridPosition.x == 0) {
-        game.loadGameSegments(
-          Random().nextInt(segments.length),
-          game.lastBlockXPosition,
-        );
-      }
-    }
-    if (gridPosition.x == 9) {
-      if (game.lastBlockKey == _blockKey) {
-        game.lastBlockXPosition = position.x + size.x - 10;
-      }
     }
     if (game.health <= 0) {
       removeFromParent();

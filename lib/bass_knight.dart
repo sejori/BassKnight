@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'actors/player.dart';
 import 'actors/minion.dart';
-import 'managers/segment_manager.dart';
 import 'objects/ground_block.dart';
-import 'objects/platform_block.dart';
-import 'objects/star.dart';
 import 'overlays/hud.dart';
 
 class BassKnightGame extends FlameGame
@@ -18,6 +15,7 @@ class BassKnightGame extends FlameGame
   late Player _bassKnight;
   late double lastBlockXPosition = 0.0;
   late UniqueKey lastBlockKey;
+  Timer? minionSpawnTimer;
 
   int starsCollected = 0;
   int health = 3;
@@ -38,8 +36,19 @@ class BassKnightGame extends FlameGame
       'minion_32x32.png',
     ]);
     camera.viewfinder.anchor = Anchor.topLeft;
+    
+    minionSpawnTimer = Timer(2.0, onTick: spawnMinion, repeat: true);
 
     initializeGame(loadHud: true);
+  }
+
+  void spawnMinion() {
+    final minion = Minion();
+    // Spawn off-screen to the right
+    // Ground block height is 64, and minion anchor is bottomLeft.
+    // So minion should sit at size.y - 64.
+    minion.position = Vector2(size.x + 64, size.y - 64);
+    world.add(minion);
   }
 
   @override
@@ -47,6 +56,7 @@ class BassKnightGame extends FlameGame
     if (health <= 0) {
       overlays.add('GameOver');
     }
+    minionSpawnTimer?.update(dt);
     super.update(dt);
   }
 
@@ -55,38 +65,15 @@ class BassKnightGame extends FlameGame
     return const Color.fromARGB(255, 173, 223, 247);
   }
 
-  void loadGameSegments(int segmentIndex, double xPositionOffset) {
-    for (final block in segments[segmentIndex]) {
-      final component = switch (block.blockType) {
-        const (GroundBlock) => GroundBlock(
-          gridPosition: block.gridPosition,
-          xOffset: xPositionOffset,
-        ),
-        const (PlatformBlock) => PlatformBlock(
-          gridPosition: block.gridPosition,
-          xOffset: xPositionOffset,
-        ),
-        const (Star) => Star(
-          gridPosition: block.gridPosition,
-          xOffset: xPositionOffset,
-        ),
-        const (Minion) => Minion(
-          gridPosition: block.gridPosition,
-          xOffset: xPositionOffset,
-        ),
-        _ => throw UnimplementedError(),
-      };
-      world.add(component);
-    }
-  }
-
   void initializeGame({required bool loadHud}) {
-    // Assume that size.x < 3200
-    final segmentsToLoad = (size.x / 640).ceil();
-    segmentsToLoad.clamp(0, segments.length);
-
+    // Create a static floor
+    final segmentsToLoad = (size.x / 64).ceil();
     for (var i = 0; i <= segmentsToLoad; i++) {
-      loadGameSegments(i, (640 * i).toDouble());
+      final ground = GroundBlock(
+        gridPosition: Vector2(i.toDouble(), 0),
+        xOffset: 0,
+      );
+      world.add(ground);
     }
 
     _bassKnight = Player(position: Vector2(128, canvasSize.y - 128));
@@ -94,11 +81,14 @@ class BassKnightGame extends FlameGame
     if (loadHud) {
       camera.viewport.add(Hud());
     }
+    minionSpawnTimer?.start();
   }
 
   void reset() {
     starsCollected = 0;
     health = 3;
+    // Clear existing children to reset world
+    world.removeAll(world.children);
     initializeGame(loadHud: false);
   }
 }
