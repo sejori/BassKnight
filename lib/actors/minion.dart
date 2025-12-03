@@ -19,8 +19,8 @@ class Minion extends SpriteAnimationComponent
     animation = SpriteAnimation.fromFrameData(
       game.images.fromCache('minion_32x32.png'),
       SpriteAnimationData.sequenced(
-        amount: 2,
-        textureSize: Vector2.all(16),
+        amount: 1,
+        textureSize: Vector2.all(32),
         stepTime: 0.7,
       ),
     );

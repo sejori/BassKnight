@@ -15,7 +15,7 @@ class BassKnightGame extends FlameGame
     with HasCollisionDetection, HasKeyboardHandlerComponents {
   BassKnightGame();
 
-  late Player _ember;
+  late Player _bassKnight;
   late double lastBlockXPosition = 0.0;
   late UniqueKey lastBlockKey;
 
@@ -29,7 +29,6 @@ class BassKnightGame extends FlameGame
     debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([
       'block.png',
-      'ember.png',
       'bassknight_32x32.png',
       'ground.png',
       'heart_half.png',
@@ -90,8 +89,8 @@ class BassKnightGame extends FlameGame
       loadGameSegments(i, (640 * i).toDouble());
     }
 
-    _ember = Player(position: Vector2(128, canvasSize.y - 128));
-    world.add(_ember);
+    _bassKnight = Player(position: Vector2(128, canvasSize.y - 128));
+    world.add(_bassKnight);
     if (loadHud) {
       camera.viewport.add(Hud());
     }

@@ -31,8 +31,8 @@ class Player extends SpriteAnimationComponent
     animation = SpriteAnimation.fromFrameData(
       game.images.fromCache('bassknight_32x32.png'),
       SpriteAnimationData.sequenced(
-        amount: 4,
-        textureSize: Vector2.all(16),
+        amount: 1,
+        textureSize: Vector2.all(32),
         stepTime: 0.12,
       ),
     );
