@@ -15,15 +15,9 @@ class Player extends SpriteAnimationComponent
     : super(size: Vector2.all(64), anchor: Anchor.center);
 
   final Vector2 velocity = Vector2.zero();
-  final Vector2 fromAbove = Vector2(0, -1);
-  final double gravity = 15;
-  final double jumpSpeed = 600;
   final double moveSpeed = 200;
-  final double terminalVelocity = 150;
   int horizontalDirection = 0;
-
-  bool hasJumped = false;
-  bool isOnGround = false;
+  int verticalDirection = 0;
   bool hitByEnemy = false;
 
   @override
@@ -42,6 +36,15 @@ class Player extends SpriteAnimationComponent
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    // Handle W and S keys for vertical movement
+    verticalDirection = 0; // Reset vertical direction
+    if (keysPressed.contains(LogicalKeyboardKey.keyW)) {
+      verticalDirection = -1; // Move up
+    } else if (keysPressed.contains(LogicalKeyboardKey.keyS)) {
+      verticalDirection = 1; // Move down
+    }
+
+    // Existing space key for attack
     if (event is KeyDownEvent &&
         keysPressed.contains(LogicalKeyboardKey.space)) {
       attack();
@@ -54,23 +57,13 @@ class Player extends SpriteAnimationComponent
     velocity.x = 0;
     game.objectSpeed = 0;
 
-    // Apply basic gravity.
-    velocity.y += gravity;
-
-    // Determine if ember has jumped.
-    if (hasJumped) {
-      if (isOnGround) {
-        velocity.y = -jumpSpeed;
-        isOnGround = false;
-      }
-      hasJumped = false;
-    }
-
-    // Prevent ember from jumping to crazy fast.
-    velocity.y = velocity.y.clamp(-jumpSpeed, terminalVelocity);
+    velocity.y = verticalDirection * moveSpeed;
 
     // Adjust ember position.
     position += velocity * dt;
+
+    // Clamp vertical position
+    position.y = position.y.clamp(game.canvasSize.y - 256, game.canvasSize.y);
 
     // If ember fell in pit, then game over.
     if (position.y > game.size.y + size.y) {
@@ -104,29 +97,7 @@ class Player extends SpriteAnimationComponent
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is GroundBlock || other is PlatformBlock) {
-      if (intersectionPoints.length == 2) {
-        // Calculate the collision normal and separation distance.
-        final mid =
-            (intersectionPoints.elementAt(0) +
-                intersectionPoints.elementAt(1)) /
-            2;
 
-        final collisionNormal = absoluteCenter - mid;
-        final separationDistance = (size.x / 2) - collisionNormal.length;
-        collisionNormal.normalize();
-
-        // If collision normal is almost upwards,
-        // ember must be on ground.
-        if (fromAbove.dot(collisionNormal) > 0.9) {
-          isOnGround = true;
-        }
-
-        // Resolve collision by moving ember along
-        // collision normal by separation distance.
-        position += collisionNormal.scaled(separationDistance);
-      }
-    }
 
     if (other is Star) {
       other.removeFromParent();

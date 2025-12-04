@@ -28,7 +28,7 @@ class BassKnightGame extends FlameGame
     await images.loadAll([
       'block.png',
       'bassknight_32x32.png',
-      'ground.png',
+      'grass_32x32.png',
       'heart_half.png',
       'heart.png',
       'star.png',

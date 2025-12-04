@@ -15,7 +15,7 @@ void main() {
 
       final player = game.world.children.whereType<Player>().first;
       expect(game.health, 3);
-      expect(player.position.x, 128);
+      expect(player.position.x, 128.0);
     });
 
     testWidgets('takes damage when colliding with Minion', (tester) async {

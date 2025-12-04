@@ -16,11 +16,11 @@ class GroundBlock extends SpriteComponent
   final Vector2 velocity = Vector2.zero();
 
   GroundBlock({required this.gridPosition, required this.xOffset})
-    : super(size: Vector2.all(64), anchor: Anchor.bottomLeft);
+    : super(size: Vector2(64, 256), anchor: Anchor.bottomLeft);
 
   @override
   Future<void> onLoad() async {
-    final groundImage = game.images.fromCache('ground.png');
+    final groundImage = game.images.fromCache('grass_32x32.png');
     sprite = Sprite(groundImage);
     position = Vector2(
       (gridPosition.x * size.x) + xOffset,
@@ -34,17 +34,13 @@ class GroundBlock extends SpriteComponent
   }
 
   @override
-  void update(double dt) {
-    velocity.x = game.objectSpeed;
-    position += velocity * dt;
-
-    if (position.x < -size.x) {
-      removeFromParent();
+  void render(Canvas canvas) {
+    if (sprite == null) {
+      return;
     }
-    if (game.health <= 0) {
-      removeFromParent();
-    }
-
-    super.update(dt);
+    sprite!.renderRect(canvas, Rect.fromLTWH(0, 0, size.x, 64));
+    sprite!.renderRect(canvas, Rect.fromLTWH(0, 64, size.x, 64));
+    sprite!.renderRect(canvas, Rect.fromLTWH(0, 128, size.x, 64));
+    sprite!.renderRect(canvas, Rect.fromLTWH(0, 192, size.x, 64));
   }
 }

@@ -12,7 +12,7 @@ class TestBassKnightGame extends BassKnightGame {
     final imageNames = [
       'block.png',
       'bassknight_32x32.png',
-      'ground.png',
+      'grass_32x32.png',
       'heart_half.png',
       'heart.png',
       'star.png',
