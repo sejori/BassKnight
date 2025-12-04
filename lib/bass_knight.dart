@@ -27,7 +27,7 @@ class BassKnightGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    debugMode = true; // Uncomment to see the bounding boxes
+    // debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([
       'block.png',
       'bassknight_32x32.png',
@@ -45,10 +45,11 @@ class BassKnightGame extends FlameGame
 
   void spawnMinion() {
     final minion = Minion();
-    final _random = Random();
+    final random = Random();
     final minMinionY = size.y - 256; // Top of the grass
-    final maxMinionY = size.y;       // Bottom of the screen (bottom of the grass)
-    final randomY = minMinionY + _random.nextDouble() * (maxMinionY - minMinionY);
+    final maxMinionY = size.y; // Bottom of the screen (bottom of the grass)
+    final randomY =
+        minMinionY + random.nextDouble() * (maxMinionY - minMinionY);
     minion.position = Vector2(size.x + 64, randomY);
     world.add(minion);
   }
@@ -104,30 +105,36 @@ class BassKnightGame extends FlameGame
 
   void _calculateAndSetMinionSpawnInterval() {
     const double initialInterval = 2.0; // 2 seconds
-    const double finalInterval = 1.0;    // 1 second (double the rate)
-    const double rampUpStartTime = 60.0; // After 1 minute
-    const double rampUpEndTime = 120.0;  // Levels out after 2 minutes
+    const double finalInterval = 0.5; // 1 second (double the rate)
+    const double rampUpStartTime = 30.0; // After 1 minute
+    const double rampUpEndTime = 120.0; // Levels out after 2 minutes
 
     double newInterval = initialInterval;
 
     if (_elapsedTime >= rampUpEndTime) {
       newInterval = finalInterval;
     } else if (_elapsedTime >= rampUpStartTime) {
-      final double progress = (_elapsedTime - rampUpStartTime) / (rampUpEndTime - rampUpStartTime);
-      newInterval = initialInterval * (1.0 - progress) + finalInterval * progress;
+      final double progress =
+          (_elapsedTime - rampUpStartTime) / (rampUpEndTime - rampUpStartTime);
+      newInterval =
+          initialInterval * (1.0 - progress) + finalInterval * progress;
     }
     minionSpawnInterval = newInterval;
 
-    // Debug print every second
-    if ((_elapsedTime * 10).toInt() % 10 == 0) { // Prints roughly once per second
-      print('Elapsed Time: ${_elapsedTime.toStringAsFixed(1)}s, Minion Spawn Interval: ${minionSpawnInterval.toStringAsFixed(2)}s');
-    }
+    // // Debug print every second
+    // if ((_elapsedTime * 10).toInt() % 10 == 0) {
+    //   // Prints roughly once per second
+    //   print(
+    //     'Elapsed Time: ${_elapsedTime.toStringAsFixed(1)}s, Minion Spawn Interval: ${minionSpawnInterval.toStringAsFixed(2)}s',
+    //   );
+    // }
   }
 
   void _trySpawnMinion() {
     if (_timeSinceLastMinionSpawn >= minionSpawnInterval) {
       spawnMinion();
-      _timeSinceLastMinionSpawn -= minionSpawnInterval; // Subtract, don't reset to 0 to handle frame skips
+      _timeSinceLastMinionSpawn -=
+          minionSpawnInterval; // Subtract, don't reset to 0 to handle frame skips
     }
   }
 }
