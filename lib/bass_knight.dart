@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -44,10 +45,11 @@ class BassKnightGame extends FlameGame
 
   void spawnMinion() {
     final minion = Minion();
-    // Spawn off-screen to the right
-    // Ground block height is 64, and minion anchor is bottomLeft.
-    // So minion should sit at size.y - 64.
-    minion.position = Vector2(size.x + 64, size.y - 64);
+    final _random = Random();
+    final minMinionY = size.y - 256; // Top of the grass
+    final maxMinionY = size.y;       // Bottom of the screen (bottom of the grass)
+    final randomY = minMinionY + _random.nextDouble() * (maxMinionY - minMinionY);
+    minion.position = Vector2(size.x + 64, randomY);
     world.add(minion);
   }
 

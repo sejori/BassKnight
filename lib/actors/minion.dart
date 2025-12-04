@@ -7,6 +7,7 @@ import '../bass_knight.dart';
 class Minion extends SpriteAnimationComponent
     with HasGameReference<BassKnightGame> {
   final Vector2 velocity = Vector2.zero();
+  bool hasDamagedPlayer = false;
 
   Minion() : super(size: Vector2.all(64), anchor: Anchor.bottomLeft);
 
@@ -25,9 +26,15 @@ class Minion extends SpriteAnimationComponent
 
   @override
   void update(double dt) {
-    velocity.x = -150;
+    velocity.x = -300;
     position += velocity * dt;
-    if (position.x < -size.x || game.health <= 0) {
+    if (position.x < -size.x) {
+      if (!hasDamagedPlayer) {
+        game.health--;
+        hasDamagedPlayer = true;
+      }
+      removeFromParent();
+    } else if (game.health <= 0) {
       removeFromParent();
     }
     super.update(dt);
