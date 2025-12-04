@@ -3,9 +3,10 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 
 import '../bass_knight.dart';
+import '../mixins/z_aware.dart';
 
 class Minion extends SpriteAnimationComponent
-    with HasGameReference<BassKnightGame> {
+    with HasGameReference<BassKnightGame>, ZAware {
   final Vector2 velocity = Vector2.zero();
   bool hasDamagedPlayer = false;
 

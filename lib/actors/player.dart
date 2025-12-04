@@ -4,13 +4,12 @@ import 'package:flame/effects.dart';
 import 'package:flutter/services.dart';
 
 import '../bass_knight.dart';
-import '../objects/ground_block.dart';
-import '../objects/platform_block.dart';
+import '../mixins/z_aware.dart';
 import '../objects/star.dart';
 import 'minion.dart';
 
 class Player extends SpriteAnimationComponent
-    with KeyboardHandler, CollisionCallbacks, HasGameReference<BassKnightGame> {
+    with KeyboardHandler, CollisionCallbacks, HasGameReference<BassKnightGame>, ZAware {
   Player({required super.position})
     : super(size: Vector2.all(64), anchor: Anchor.center);
 
@@ -36,17 +35,28 @@ class Player extends SpriteAnimationComponent
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    // Handle W and S keys for vertical movement
-    verticalDirection = 0; // Reset vertical direction
-    if (keysPressed.contains(LogicalKeyboardKey.keyW)) {
-      verticalDirection = -1; // Move up
-    } else if (keysPressed.contains(LogicalKeyboardKey.keyS)) {
-      verticalDirection = 1; // Move down
+    final isKeyDown = event is KeyDownEvent;
+    final isKeyUp = event is KeyUpEvent;
+
+    if (isKeyDown) {
+      if (keysPressed.contains(LogicalKeyboardKey.keyW)) {
+        verticalDirection = -1; // Move up
+      } else if (keysPressed.contains(LogicalKeyboardKey.keyS)) {
+        verticalDirection = 1; // Move down
+      }
+    } else if (isKeyUp) {
+      if (event.logicalKey == LogicalKeyboardKey.keyW ||
+          event.logicalKey == LogicalKeyboardKey.keyS) {
+        // If the released key was W or S, and no other W/S keys are still pressed
+        if (!keysPressed.contains(LogicalKeyboardKey.keyW) &&
+            !keysPressed.contains(LogicalKeyboardKey.keyS)) {
+          verticalDirection = 0;
+        }
+      }
     }
 
     // Existing space key for attack
-    if (event is KeyDownEvent &&
-        keysPressed.contains(LogicalKeyboardKey.space)) {
+    if (isKeyDown && keysPressed.contains(LogicalKeyboardKey.space)) {
       attack();
     }
     return true;

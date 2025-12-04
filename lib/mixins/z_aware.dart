@@ -1,43 +1,49 @@
 import 'package:flame/components.dart';
+import 'package:flame/game.dart';
 
-mixin ZAware on PositionComponent {
-  double _z = 0;
-  double _altitude = 0;
-  
-  // Logic X is just super.position.x
-  
-  double get z => _z;
-  set z(double value) {
-    _z = value;
-    _updatePositionAndPriority();
-  }
+import '../bass_knight.dart';
 
-  double get altitude => _altitude;
-  set altitude(double value) {
-    _altitude = value;
-    _updatePositionAndPriority();
-  }
+mixin ZAware on PositionComponent implements HasGameReference<BassKnightGame> {
+  late Vector2 _initialScale;
+  late double _maxScaleY; // Y-coordinate where max scale (1.0) applies
+  final double _minScale = 0.2; // Minimum scale factor
+  late double _scalingRangeY; // Vertical range over which scaling occurs
 
-  void _updatePositionAndPriority() {
-    // We assume super.position.x is managed by the user or movement logic.
-    // We strictly control super.position.y
-    // We need a baseline Y for Z=0. Let's assume the parent handles the "World" offset.
-    // For now, let's assume y = z - altitude.
-    // However, we usually want to position relative to the screen.
-    // Let's rely on the user to set a 'baseY' or just use 'z' as the ground line Y.
-    
-    // Simple projection:
-    // The "Ground" level for a given Z is equal to Z.
-    // So if I am at Z=500, my feet (altitude=0) are at screen Y=500.
-    // If I jump 100 units high, my screen Y becomes 400.
-    
-    y = _z - _altitude;
-    priority = _z.toInt();
-  }
-  
   @override
   void onMount() {
     super.onMount();
-    _updatePositionAndPriority();
+    _initialScale = scale.clone();
+    
+    // Define the Y-coordinate where objects appear at their maximum scale (1.0)
+    // Let's assume this is when the component's bottom is at game.size.y (bottom of screen).
+    // So, center Y = game.size.y - size.y / 2
+    _maxScaleY = game.size.y - size.y / 2;
+
+    // Define the vertical range for scaling.
+    // Let's scale over the entire visible height from maxScaleY up to the top of the screen.
+    _scalingRangeY = _maxScaleY; // From _maxScaleY up to 0 (top of screen)
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    final currentY = position.y; // This is the center Y of the component
+
+    // Calculate how far up the component is from the maxScaleY point
+    // This value will be positive when currentY < _maxScaleY (component is higher)
+    final distanceUp = _maxScaleY - currentY;
+
+    // Calculate a normalized factor (0.0 to 1.0) based on distanceUp
+    // Clamped to ensure it stays within 0 and _scalingRangeY
+    final normalizedHeight = (distanceUp / _scalingRangeY).clamp(0.0, 1.0);
+
+    // Calculate the new scale, interpolating between initialScale (max scale) and _minScale
+    // If normalizedHeight is 0, scale is initialScale (1.0)
+    // If normalizedHeight is 1, scale is _minScale (0.2)
+    final newScaleFactor = _initialScale.x * (1.0 - normalizedHeight) + _minScale * normalizedHeight;
+
+    // Apply the new scale.
+    scale.setAll(newScaleFactor);
   }
 }
