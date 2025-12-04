@@ -26,7 +26,6 @@ class TestBassKnightGame extends BassKnightGame {
     }
 
     camera.viewfinder.anchor = Anchor.topLeft;
-    minionSpawnTimer = Timer(2.0, onTick: spawnMinion, repeat: true, autoStart: false);
     
     // Initialize game without HUD to keep it simple
     initializeGame(loadHud: false);

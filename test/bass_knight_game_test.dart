@@ -11,11 +11,9 @@ void main() {
       await tester.pumpWidget(GameWidget(game: game));
       await tester.pump(); // Wait for load cycle
 
-      print('Verify: timer is ${game.minionSpawnTimer}');
-
       expect(game.starsCollected, 0);
       expect(game.health, 3);
-      expect(game.minionSpawnTimer, isNotNull);
+      expect(game.minionSpawnInterval, 2.0);
       
       // pump to process additions
       await tester.pump(const Duration(milliseconds: 10));
