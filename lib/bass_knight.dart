@@ -81,8 +81,8 @@ class BassKnightGame extends FlameGame
 
     // Create a static floor
     double groundScale = 1.0;
-    if (size.y * (2 / 3) < 256) {
-      groundScale = (size.y * (2 / 3)) / 256;
+    if (size.y * 0.5 < 256) {
+      groundScale = (size.y * 0.5) / 256;
     }
 
     final segmentsToLoad = (size.x / (64 * groundScale)).ceil();
