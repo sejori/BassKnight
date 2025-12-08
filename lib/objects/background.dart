@@ -5,6 +5,7 @@ class Background extends Component with HasGameRef<FlameGame> {
   late SpriteComponent _castle;
   late SpriteComponent _pillar;
   final List<SpriteComponent> _fillers = [];
+  final double _yOffset = -64.0; // Half of the 256 height of the ground blocks
 
   @override
   Future<void> onLoad() async {
@@ -12,12 +13,12 @@ class Background extends Component with HasGameRef<FlameGame> {
     final pillarSprite = await gameRef.loadSprite('bg_pillar_64x64.png');
     final fillerSprite = await gameRef.loadSprite('bg_starter_32x32.png');
 
-    // Create components with priorities to establish depth
-    // Filler is at the back
-    // Castle is in front of filler
-    // Pillar is in front of castle
-    // All are negative to be behind the gameplay elements (default priority 0)
-    _castle = SpriteComponent(sprite: castleSprite, priority: -90);
+    // Create components with priorities to establish depth.
+    // Adjusted based on user request:
+    // Castle is -70 (Top-most of background elements) to prevent clipping.
+    // Pillar is -80 (Behind Castle, but in front of filler).
+    // Filler is -100 (Back).
+    _castle = SpriteComponent(sprite: castleSprite, priority: -70);
     _pillar = SpriteComponent(sprite: pillarSprite, priority: -80);
     
     // Add components to the game
@@ -36,18 +37,18 @@ class Background extends Component with HasGameRef<FlameGame> {
     // Ensure sprites are loaded before resizing
     if (!isLoaded) return;
 
-    // Scale and position Castle (Left aligned)
+    // Scale and position Castle (Left aligned, shifted up)
     if (_castle.sprite != null) {
       double scale = size.y / _castle.sprite!.originalSize.y;
       _castle.size = _castle.sprite!.originalSize * scale;
-      _castle.position = Vector2(0, 0);
+      _castle.position = Vector2(0, _yOffset);
     }
 
-    // Scale and position Pillar (Right aligned)
+    // Scale and position Pillar (Right aligned, shifted up)
     if (_pillar.sprite != null) {
       double scale = size.y / _pillar.sprite!.originalSize.y;
       _pillar.size = _pillar.sprite!.originalSize * scale;
-      _pillar.position = Vector2(size.x - _pillar.size.x, 0);
+      _pillar.position = Vector2(size.x - _pillar.size.x, _yOffset);
     }
 
     // Handle Fillers
@@ -68,11 +69,11 @@ class Background extends Component with HasGameRef<FlameGame> {
         }
       }
       
-      // Position all fillers
+      // Position all fillers (shifted up)
       for (int i = 0; i < _fillers.length; i++) {
         if (i < needed) {
            _fillers[i].size = fillerSize;
-           _fillers[i].position = Vector2(i * fillerSize.x, 0);
+           _fillers[i].position = Vector2(i * fillerSize.x, _yOffset);
            // Ensure it's visible (in case it was hidden)
            _fillers[i].opacity = 1.0; 
         } else {

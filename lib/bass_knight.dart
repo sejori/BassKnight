@@ -80,11 +80,17 @@ class BassKnightGame extends FlameGame
     world.add(Background());
 
     // Create a static floor
-    final segmentsToLoad = (size.x / 64).ceil();
+    double groundScale = 1.0;
+    if (size.y * (2 / 3) < 256) {
+      groundScale = (size.y * (2 / 3)) / 256;
+    }
+
+    final segmentsToLoad = (size.x / (64 * groundScale)).ceil();
     for (var i = 0; i <= segmentsToLoad; i++) {
       final ground = GroundBlock(
         gridPosition: Vector2(i.toDouble(), 0),
         xOffset: 0,
+        heightScale: groundScale,
       );
       world.add(ground);
     }

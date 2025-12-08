@@ -11,25 +11,30 @@ class GroundBlock extends SpriteComponent
     with HasGameReference<BassKnightGame> {
   final Vector2 gridPosition;
   double xOffset;
+  final double heightScale;
 
   final UniqueKey _blockKey = UniqueKey();
   final Vector2 velocity = Vector2.zero();
 
-  GroundBlock({required this.gridPosition, required this.xOffset})
-    : super(size: Vector2(64, 256), anchor: Anchor.bottomLeft);
+  GroundBlock({
+    required this.gridPosition,
+    required this.xOffset,
+    this.heightScale = 1.0,
+  }) : super(size: Vector2(64, 256), anchor: Anchor.bottomLeft);
 
   @override
   Future<void> onLoad() async {
     final groundImage = game.images.fromCache('grass_32x32.png');
     sprite = Sprite(groundImage);
+    scale = Vector2.all(heightScale);
     position = Vector2(
-      (gridPosition.x * size.x) + xOffset,
-      game.size.y - (gridPosition.y * size.y),
+      (gridPosition.x * size.x * heightScale) + xOffset,
+      game.size.y - (gridPosition.y * size.y * heightScale),
     );
     add(RectangleHitbox(collisionType: CollisionType.passive));
     if (gridPosition.x == 9 && position.x > game.lastBlockXPosition) {
       game.lastBlockKey = _blockKey;
-      game.lastBlockXPosition = position.x + size.x;
+      game.lastBlockXPosition = position.x + (size.x * heightScale);
     }
   }
 
