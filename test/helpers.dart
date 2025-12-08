@@ -18,6 +18,9 @@ class TestBassKnightGame extends BassKnightGame {
       'star.png',
       'water_enemy.png',
       'minion_32x32.png',
+      'bg_castle_64x64.png',
+      'bg_pillar_64x64.png',
+      'bg_starter_32x32.png',
     ];
     
     for (final name in imageNames) {

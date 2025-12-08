@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'actors/player.dart';
 import 'actors/minion.dart';
 import 'objects/ground_block.dart';
+import 'objects/background.dart';
 import 'overlays/hud.dart';
 
 class BassKnightGame extends FlameGame
@@ -16,6 +17,7 @@ class BassKnightGame extends FlameGame
   late Player _bassKnight;
   late double lastBlockXPosition = 0.0;
   late UniqueKey lastBlockKey;
+  bool hasGameStarted = false;
   double minionSpawnInterval = 2.0; // Initial interval
   double _timeSinceLastMinionSpawn = 0.0;
 
@@ -37,6 +39,9 @@ class BassKnightGame extends FlameGame
       'star.png',
       'water_enemy.png',
       'minion_32x32.png',
+      'bg_castle_64x64.png',
+      'bg_pillar_64x64.png',
+      'bg_starter_32x32.png',
     ]);
     camera.viewfinder.anchor = Anchor.topLeft;
 
@@ -72,6 +77,8 @@ class BassKnightGame extends FlameGame
   }
 
   void initializeGame({required bool loadHud}) {
+    world.add(Background());
+
     // Create a static floor
     final segmentsToLoad = (size.x / 64).ceil();
     for (var i = 0; i <= segmentsToLoad; i++) {
