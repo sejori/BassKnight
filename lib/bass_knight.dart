@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:bassknight/utils/bmp.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -29,6 +30,14 @@ class BassKnightGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
+    // Generate a 32x32 BMP image manually
+    final bmp = BMP(32, 32);
+    generateGradient(bmp);
+    final bmpBytes = bmp.image;
+    final flutterImage = await decodeImageFromList(bmpBytes);
+
+    images.add('image.png', flutterImage);
+
     // debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([
       'block.png',

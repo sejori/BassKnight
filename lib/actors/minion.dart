@@ -1,6 +1,5 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 
 import '../bass_knight.dart';
 import '../mixins/z_aware.dart';
@@ -15,7 +14,7 @@ class Minion extends SpriteAnimationComponent
   @override
   Future<void> onLoad() async {
     animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('minion_32x32.png'),
+      game.images.fromCache('image.png'),
       SpriteAnimationData.sequenced(
         amount: 1,
         textureSize: Vector2.all(32),
