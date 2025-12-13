@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class BMP {
   static const int headerSize = 54;
   final int width;
   final int height;
-  late final Uint8List image;
+  late Uint8List image;
 
   /// Stores unique ARGB colors found in the loaded image.
   final List<int> palette = [];
@@ -18,11 +20,11 @@ class BMP {
     final int contentSize = width * height * 4;
     final int fileSize = headerSize + contentSize;
     image = Uint8List(fileSize);
-    _writeHeader();
+    _writeHeader(image.buffer.asByteData(), width, height);
   }
 
-  void _writeHeader() {
-    final ByteData bd = image.buffer.asByteData();
+  /// Shared static method to write BMP header
+  static void _writeHeader(ByteData bd, int width, int height) {
     final int contentSize = width * height * 4;
     final int fileSize = headerSize + contentSize;
 
@@ -47,14 +49,23 @@ class BMP {
     bd.setUint32(50, 0, Endian.little); // Colors important
   }
 
-  /// Loads a PNG from [filePath], resizes it to match this BMP's dimensions,
-  /// populates the image buffer, and builds the color palette.
+  /// Loads a PNG from [filePath] in a background isolate.
   Future<void> loadImage(String filePath) async {
     final File file = File(filePath);
     final Uint8List fileBytes = await file.readAsBytes();
+    await _processImageBytes(fileBytes);
+  }
 
+  /// Loads an image from Flutter assets from [assetPath].
+  Future<void> loadAsset(String assetPath) async {
+    final ByteData byteData = await rootBundle.load(assetPath);
+    final Uint8List bytes = byteData.buffer.asUint8List();
+    await _processImageBytes(bytes);
+  }
+
+  Future<void> _processImageBytes(Uint8List imageBytesSource) async {
     final ui.Codec codec = await ui.instantiateImageCodec(
-      fileBytes,
+      imageBytesSource,
       targetWidth: width,
       targetHeight: height,
     );
@@ -68,33 +79,19 @@ class BMP {
       throw Exception('Failed to decode image data');
     }
 
+    // Offload heavy processing to an isolate
+    final result = await compute(_processBmpData, (
+      width: width,
+      height: height,
+      sourceBytes: imageBytes.buffer.asUint8List(),
+    ));
+
+    // Update state with result from isolate
+    image = result.bmpData;
     palette.clear();
+    palette.addAll(result.palette);
     _paletteMap.clear();
-
-    int srcOffset = 0;
-    // Iterate source image (Top-Down)
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        final r = imageBytes.getUint8(srcOffset);
-        final g = imageBytes.getUint8(srcOffset + 1);
-        final b = imageBytes.getUint8(srcOffset + 2);
-        final a = imageBytes.getUint8(srcOffset + 3);
-        srcOffset += 4;
-
-        // Pack as ARGB int
-        final int color = (a << 24) | (r << 16) | (g << 8) | b;
-
-        int index = palette.indexOf(color);
-        if (index == -1) {
-          index = palette.length;
-          palette.add(color);
-          _paletteMap[index] = [];
-        }
-        _paletteMap[index]!.add((x: x, y: y));
-
-        _setPixel(x, y, b, g, r, a);
-      }
-    }
+    _paletteMap.addAll(result.paletteMap);
   }
 
   /// Updates the color at [index] in the palette and redraws all associated pixels.
@@ -115,9 +112,7 @@ class BMP {
     }
   }
 
-  /// Sets pixel at (x,y) [Top-Left origin] with BGRA values.
   void _setPixel(int x, int y, int b, int g, int r, int a) {
-    // Convert top-down y to bottom-up BMP y
     final int bmpY = (height - 1) - y;
     final int rowStride = width * 4;
     final int offset = headerSize + (bmpY * rowStride) + (x * 4);
@@ -127,6 +122,72 @@ class BMP {
     image[offset + 2] = r;
     image[offset + 3] = a;
   }
+}
+
+/// The data transfer object for the isolate
+typedef _BmpProcessArgs = ({int width, int height, Uint8List sourceBytes});
+typedef _BmpProcessResult = ({
+  Uint8List bmpData,
+  List<int> palette,
+  Map<int, List<({int x, int y})>> paletteMap,
+});
+
+/// Top-level function to run in the isolate
+_BmpProcessResult _processBmpData(_BmpProcessArgs args) {
+  final width = args.width;
+  final height = args.height;
+  final sourceBytes = args.sourceBytes;
+
+  const int headerSize = 54;
+  final int contentSize = width * height * 4;
+  final int fileSize = headerSize + contentSize;
+  final Uint8List bmpData = Uint8List(fileSize);
+
+  // Write header
+  BMP._writeHeader(bmpData.buffer.asByteData(), width, height);
+
+  final List<int> palette = [];
+  final Map<int, List<({int x, int y})>> paletteMap = {};
+  // Helper map for O(1) color lookup during loop
+  final Map<int, int> colorToIndex = {};
+
+  int srcOffset = 0;
+
+  // Iterate source image (Top-Down)
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      final r = sourceBytes[srcOffset];
+      final g = sourceBytes[srcOffset + 1];
+      final b = sourceBytes[srcOffset + 2];
+      final a = sourceBytes[srcOffset + 3];
+      srcOffset += 4;
+
+      // Pack as ARGB int
+      final int color = (a << 24) | (r << 16) | (g << 8) | b;
+
+      int? index = colorToIndex[color];
+      if (index == null) {
+        index = palette.length;
+        palette.add(color);
+        colorToIndex[color] = index;
+        paletteMap[index] = [];
+      }
+      paletteMap[index]!.add((x: x, y: y));
+
+      // Set pixel in BMP buffer
+      // Convert top-down y to bottom-up BMP y
+      final int bmpY = (height - 1) - y;
+      final int rowStride = width * 4;
+      final int offset = headerSize + (bmpY * rowStride) + (x * 4);
+
+      bmpData[offset] = b;
+      bmpData[offset + 1] = g;
+      bmpData[offset + 2] = r;
+      bmpData[offset + 3] = a;
+    }
+  }
+
+  return (bmpData: bmpData, palette: palette, paletteMap: paletteMap);
 }
 
 /// Generates the default gradient pattern directly into the image buffer.

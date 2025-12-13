@@ -7,6 +7,7 @@ import '../mixins/z_aware.dart';
 class Minion extends SpriteAnimationComponent
     with HasGameReference<BassKnightGame>, ZAware {
   final Vector2 velocity = Vector2.zero();
+
   bool hasDamagedPlayer = false;
 
   Minion() : super(size: Vector2.all(64), anchor: Anchor.bottomLeft);

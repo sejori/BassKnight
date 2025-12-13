@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:bassknight/textures/minion.dart';
 import 'package:bassknight/utils/bmp.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -35,6 +36,8 @@ class BassKnightGame extends FlameGame
     generateGradient(bmp);
     final bmpBytes = bmp.image;
     final flutterImage = await decodeImageFromList(bmpBytes);
+
+    loadMinionTextureAndPrintPalette();
 
     images.add('image.png', flutterImage);
 
