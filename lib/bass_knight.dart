@@ -1,6 +1,5 @@
 import 'dart:math';
-import 'package:bassknight/textures/minion.dart';
-import 'package:bassknight/utils/bmp.dart';
+import 'package:bassknight/sprites/minion.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -31,16 +30,9 @@ class BassKnightGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    // Generate a 32x32 BMP image manually
-    final bmp = BMP(32, 32);
-    generateGradient(bmp);
-    final bmpBytes = bmp.bytes;
-    final flutterImage = await decodeImageFromList(bmpBytes);
+    final minionImage = await loadMinionTextureAndPrintPalette();
 
-    final minionBytes = await loadMinionTextureAndPrintPalette();
-    final minionImage = await decodeImageFromList(minionBytes);
-
-    images.add('minion', minionImage);
+    images.add('purple_minion', minionImage);
 
     // debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([
