@@ -15,7 +15,7 @@ class Minion extends SpriteAnimationComponent
   @override
   Future<void> onLoad() async {
     animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('image.png'),
+      game.images.fromCache('minion'),
       SpriteAnimationData.sequenced(
         amount: 1,
         textureSize: Vector2.all(32),

@@ -34,12 +34,13 @@ class BassKnightGame extends FlameGame
     // Generate a 32x32 BMP image manually
     final bmp = BMP(32, 32);
     generateGradient(bmp);
-    final bmpBytes = bmp.image;
+    final bmpBytes = bmp.bytes;
     final flutterImage = await decodeImageFromList(bmpBytes);
 
-    loadMinionTextureAndPrintPalette();
+    final minionBytes = await loadMinionTextureAndPrintPalette();
+    final minionImage = await decodeImageFromList(minionBytes);
 
-    images.add('image.png', flutterImage);
+    images.add('minion', minionImage);
 
     // debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([

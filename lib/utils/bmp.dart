@@ -3,12 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:bassknight/utils/material_palette.dart';
 
 class BMP {
   static const int headerSize = 54;
   final int width;
   final int height;
-  late Uint8List image;
+  late Uint8List bytes;
 
   /// Stores unique ARGB colors found in the loaded image.
   final List<int> palette = [];
@@ -19,8 +20,8 @@ class BMP {
   BMP(this.width, this.height) {
     final int contentSize = width * height * 4;
     final int fileSize = headerSize + contentSize;
-    image = Uint8List(fileSize);
-    _writeHeader(image.buffer.asByteData(), width, height);
+    bytes = Uint8List(fileSize);
+    _writeHeader(bytes.buffer.asByteData(), width, height);
   }
 
   /// Shared static method to write BMP header
@@ -87,7 +88,7 @@ class BMP {
     ));
 
     // Update state with result from isolate
-    image = result.bmpData;
+    bytes = result.bmpData;
     palette.clear();
     palette.addAll(result.palette);
     _paletteMap.clear();
@@ -117,10 +118,10 @@ class BMP {
     final int rowStride = width * 4;
     final int offset = headerSize + (bmpY * rowStride) + (x * 4);
 
-    image[offset] = b;
-    image[offset + 1] = g;
-    image[offset + 2] = r;
-    image[offset + 3] = a;
+    bytes[offset] = b;
+    bytes[offset + 1] = g;
+    bytes[offset + 2] = r;
+    bytes[offset + 3] = a;
   }
 }
 
@@ -148,8 +149,12 @@ _BmpProcessResult _processBmpData(_BmpProcessArgs args) {
 
   final List<int> palette = [];
   final Map<int, List<({int x, int y})>> paletteMap = {};
-  // Helper map for O(1) color lookup during loop
-  final Map<int, int> colorToIndex = {};
+
+  // Helpers for O(1) lookups
+  final Map<int, int> materialColorToIndex =
+      {}; // Maps MatColor -> Palette Index
+  final Map<int, int> sourceColorCache =
+      {}; // Maps Source ARGB -> MatColor ARGB
 
   int srcOffset = 0;
 
@@ -163,27 +168,42 @@ _BmpProcessResult _processBmpData(_BmpProcessArgs args) {
       srcOffset += 4;
 
       // Pack as ARGB int
-      final int color = (a << 24) | (r << 16) | (g << 8) | b;
+      final int originalColor = (a << 24) | (r << 16) | (g << 8) | b;
 
-      int? index = colorToIndex[color];
+      // 1. Find the Closest Material Color (with caching)
+      int materialColor;
+      if (sourceColorCache.containsKey(originalColor)) {
+        materialColor = sourceColorCache[originalColor]!;
+      } else {
+        materialColor = findClosestMaterialColor(originalColor);
+        sourceColorCache[originalColor] = materialColor;
+      }
+
+      // 2. Add to Palette (if new)
+      int? index = materialColorToIndex[materialColor];
       if (index == null) {
         index = palette.length;
-        palette.add(color);
-        colorToIndex[color] = index;
+        palette.add(materialColor);
+        materialColorToIndex[materialColor] = index;
         paletteMap[index] = [];
       }
       paletteMap[index]!.add((x: x, y: y));
 
-      // Set pixel in BMP buffer
+      // 3. Write to BMP Buffer (using the Material Color components)
+      final ma = (materialColor >> 24) & 0xFF;
+      final mr = (materialColor >> 16) & 0xFF;
+      final mg = (materialColor >> 8) & 0xFF;
+      final mb = materialColor & 0xFF;
+
       // Convert top-down y to bottom-up BMP y
       final int bmpY = (height - 1) - y;
       final int rowStride = width * 4;
       final int offset = headerSize + (bmpY * rowStride) + (x * 4);
 
-      bmpData[offset] = b;
-      bmpData[offset + 1] = g;
-      bmpData[offset + 2] = r;
-      bmpData[offset + 3] = a;
+      bmpData[offset] = mb; // B
+      bmpData[offset + 1] = mg; // G
+      bmpData[offset + 2] = mr; // R
+      bmpData[offset + 3] = ma; // A
     }
   }
 
@@ -201,10 +221,10 @@ void generateGradient(BMP bmp) {
       final int r = (x * 255 / (bmp.width - 1)).round();
       final int g = (y * 255 / (bmp.height - 1)).round();
 
-      bmp.image[offset++] = 0; // B
-      bmp.image[offset++] = g; // G
-      bmp.image[offset++] = r; // R
-      bmp.image[offset++] = 255; // A
+      bmp.bytes[offset++] = 0; // B
+      bmp.bytes[offset++] = g; // G
+      bmp.bytes[offset++] = r; // R
+      bmp.bytes[offset++] = 255; // A
     }
   }
 }
