@@ -1,22 +1,40 @@
-import 'dart:ui';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart' hide Image;
 import 'package:bassknight/utils/bmp.dart';
-import 'package:bassknight/utils/material_palette.dart';
 
 BMP minionTexture = BMP(32, 32);
 
-// This function needs to be called in an appropriate async context,
-// for example, in the game's onLoad method or a main setup function.
-Future<Image> loadMinionTextureAndPrintPalette() async {
+// Returns a Map of color name -> Image
+Future<Map<String, ui.Image>> loadMinionVariations() async {
   await minionTexture.loadAsset('assets/images/minion_32x32.png');
-  for (int i = 0; i < minionTexture.palette.length; i++) {
-    final color = minionTexture.palette[i];
-    final colorName = getMaterialColorName(color);
-    debugPrint(
-      '  Color $i: $colorName (0x${color.toRadixString(16).toUpperCase()})',
-    );
+
+  final variations = <String, ui.Image>{};
+
+  // Define variations: Name -> [BodyColor, ShadowColor]
+  final definitions = {
+    'purple': [Colors.purple[500]!, Colors.deepPurple[500]!],
+    'yellow': [Colors.yellow[500]!, Colors.orange[500]!],
+    'red': [Colors.red[500]!, Colors.red[900]!],
+    'blue': [Colors.blue[500]!, Colors.indigo[500]!],
+    'green': [Colors.green[500]!, Colors.green[900]!],
+  };
+
+  // Indices found by analysis
+  const int bodyIndex = 2;
+  const int shadowIndex = 3;
+
+  for (final entry in definitions.entries) {
+    final name = entry.key;
+    final colors = entry.value;
+
+    // Update palette
+    minionTexture.updatePalette(bodyIndex, colors[0].value);
+    minionTexture.updatePalette(shadowIndex, colors[1].value);
+
+    // Decode
+    final ui.Image image = await decodeImageFromList(minionTexture.bytes);
+    variations[name] = image;
   }
 
-  return decodeImageFromList(minionTexture.bytes);
+  return variations;
 }

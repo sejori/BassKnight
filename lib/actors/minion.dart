@@ -7,15 +7,17 @@ import '../mixins/z_aware.dart';
 class Minion extends SpriteAnimationComponent
     with HasGameReference<BassKnightGame>, ZAware {
   final Vector2 velocity = Vector2.zero();
+  final String colorName;
 
   bool hasDamagedPlayer = false;
 
-  Minion() : super(size: Vector2.all(64), anchor: Anchor.bottomLeft);
+  Minion({this.colorName = 'purple'})
+      : super(size: Vector2.all(64), anchor: Anchor.bottomLeft);
 
   @override
   Future<void> onLoad() async {
     animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('minion'),
+      game.images.fromCache('minion_$colorName'),
       SpriteAnimationData.sequenced(
         amount: 1,
         textureSize: Vector2.all(32),

@@ -30,9 +30,10 @@ class BassKnightGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    final minionImage = await loadMinionTextureAndPrintPalette();
-
-    images.add('purple_minion', minionImage);
+    final minionImages = await loadMinionVariations();
+    for (final entry in minionImages.entries) {
+      images.add('minion_${entry.key}', entry.value);
+    }
 
     // debugMode = true; // Uncomment to see the bounding boxes
     await images.loadAll([
@@ -54,8 +55,11 @@ class BassKnightGame extends FlameGame
   }
 
   void spawnMinion() {
-    final minion = Minion();
     final random = Random();
+    final colors = ['purple', 'yellow', 'red', 'blue', 'green'];
+    final color = colors[random.nextInt(colors.length)];
+    final minion = Minion(colorName: color);
+
     final minMinionY = size.y - 256; // Top of the grass
     final maxMinionY = size.y; // Bottom of the screen (bottom of the grass)
     final randomY =

@@ -26,6 +26,12 @@ class TestBassKnightGame extends BassKnightGame {
       images.add(name, image);
     }
 
+    final variationColors = ['purple', 'yellow', 'red', 'blue', 'green'];
+    for (final color in variationColors) {
+      final image = await createMockImage();
+      images.add('minion_$color', image);
+    }
+
     camera.viewfinder.anchor = Anchor.topLeft;
 
     // Initialize game without HUD to keep it simple
