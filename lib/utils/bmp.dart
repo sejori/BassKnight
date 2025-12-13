@@ -1,12 +1,11 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:bassknight/utils/material_palette.dart';
 
 class BMP {
-  static const int headerSize = 54;
+  static const int headerSize = 138; // 14 (File) + 124 (V5 Header)
   final int width;
   final int height;
   late Uint8List bytes;
@@ -24,30 +23,42 @@ class BMP {
     _writeHeader(bytes.buffer.asByteData(), width, height);
   }
 
-  /// Shared static method to write BMP header
+  /// Shared static method to write BMP header (BITMAPV5HEADER)
   static void _writeHeader(ByteData bd, int width, int height) {
     final int contentSize = width * height * 4;
     final int fileSize = headerSize + contentSize;
 
-    // Bitmap File Header
+    // --- Bitmap File Header (14 bytes) ---
     bd.setUint8(0, 0x42); // 'B'
     bd.setUint8(1, 0x4D); // 'M'
     bd.setUint32(2, fileSize, Endian.little);
     bd.setUint32(6, 0, Endian.little); // Reserved
     bd.setUint32(10, headerSize, Endian.little); // Offset to pixel data
 
-    // Bitmap Info Header
-    bd.setUint32(14, 40, Endian.little); // Header size
-    bd.setInt32(18, width, Endian.little);
-    bd.setInt32(22, height, Endian.little); // Positive height for bottom-up
-    bd.setUint16(26, 1, Endian.little); // Planes
-    bd.setUint16(28, 32, Endian.little); // BPP
-    bd.setUint32(30, 0, Endian.little); // Compression (BI_RGB)
-    bd.setUint32(34, contentSize, Endian.little); // Image size
-    bd.setInt32(38, 0, Endian.little); // X pixels per meter
-    bd.setInt32(42, 0, Endian.little); // Y pixels per meter
-    bd.setUint32(46, 0, Endian.little); // Colors used
-    bd.setUint32(50, 0, Endian.little); // Colors important
+    // --- Bitmap V5 Info Header (124 bytes) ---
+    bd.setUint32(14, 124, Endian.little); // Header size (bV5Size)
+    bd.setInt32(18, width, Endian.little); // bV5Width
+    bd.setInt32(22, height, Endian.little); // bV5Height (bottom-up)
+    bd.setUint16(26, 1, Endian.little); // bV5Planes
+    bd.setUint16(28, 32, Endian.little); // bV5BitCount (32-bit)
+    bd.setUint32(30, 3, Endian.little); // bV5Compression (BI_BITFIELDS)
+    bd.setUint32(34, contentSize, Endian.little); // bV5SizeImage
+    bd.setInt32(38, 0, Endian.little); // bV5XPelsPerMeter
+    bd.setInt32(42, 0, Endian.little); // bV5YPelsPerMeter
+    bd.setUint32(46, 0, Endian.little); // bV5ClrUsed
+    bd.setUint32(50, 0, Endian.little); // bV5ClrImportant
+
+    // V5 Masks (BGRA order in memory)
+    bd.setUint32(54, 0x00FF0000, Endian.little); // bV5RedMask
+    bd.setUint32(58, 0x0000FF00, Endian.little); // bV5GreenMask
+    bd.setUint32(62, 0x000000FF, Endian.little); // bV5BlueMask
+    bd.setUint32(66, 0xFF000000, Endian.little); // bV5AlphaMask
+
+    bd.setUint32(70, 0x73524742, Endian.little); // bV5CSType ('sRGB')
+
+    // Remaining fields (Endpoints, Gamma, Intent, ProfileData...) are 0
+    // We initialized the list to 0s, but we can be explicit if needed.
+    // Since we allocated Uint8List, it's zeroed.
   }
 
   /// Loads a PNG from [filePath] in a background isolate.
@@ -139,23 +150,21 @@ _BmpProcessResult _processBmpData(_BmpProcessArgs args) {
   final height = args.height;
   final sourceBytes = args.sourceBytes;
 
-  const int headerSize = 54;
+  const int headerSize = 138; // 14 (File) + 124 (V5 Header)
   final int contentSize = width * height * 4;
   final int fileSize = headerSize + contentSize;
   final Uint8List bmpData = Uint8List(fileSize);
 
   // Write header
   BMP._writeHeader(bmpData.buffer.asByteData(), width, height);
-
   final List<int> palette = [];
   final Map<int, List<({int x, int y})>> paletteMap = {};
 
   // Helpers for O(1) lookups
   final Map<int, int> materialColorToIndex =
-      {}; // Maps MatColor -> Palette Index
+      {}; // Maps MatColor -> Palette Inde
   final Map<int, int> sourceColorCache =
       {}; // Maps Source ARGB -> MatColor ARGB
-
   int srcOffset = 0;
 
   // Iterate source image (Top-Down)
