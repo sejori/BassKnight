@@ -28,8 +28,8 @@ Future<Map<String, ui.Image>> loadMinionVariations() async {
     final colors = entry.value;
 
     // Update palette
-    minionTexture.updatePalette(bodyIndex, colors[0].value);
-    minionTexture.updatePalette(shadowIndex, colors[1].value);
+    minionTexture.updatePalette(bodyIndex, colors[0].toARGB32());
+    minionTexture.updatePalette(shadowIndex, colors[1].toARGB32());
 
     // Decode
     final ui.Image image = await decodeImageFromList(minionTexture.bytes);
